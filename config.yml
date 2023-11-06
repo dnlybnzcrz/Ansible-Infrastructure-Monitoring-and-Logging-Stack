@@ -1,0 +1,84 @@
+---
+
+- hosts: all
+  become: true
+  pre_tasks:
+
+  - name: Dpkg fixing in Ubuntu Servers
+    shell: |
+      dpkg --configure -a
+    when: ansible_distribution == "Ubuntu"
+
+  - name: Update and Upgrade remote in Ubuntu servers
+    apt:
+      update_cache: yes
+      upgrade: yes
+    when: ansible_distribution == "Ubuntu"
+
+  - name: Installing epel-release and dnf
+    yum:
+      name:
+        - epel-release
+        - dnf
+    when: ansible_distribution == "CentOS"
+
+  - name: Update and Upgrade remote CentOS server
+    dnf:
+      update_cache: yes
+      name: "*"
+      state: latest
+    when: ansible_distribution == "CentOS"
+
+- hosts: ubuntu
+  become: true
+  roles:
+   - nagios_ubuntu
+
+- hosts: centos
+  become: true
+  roles:
+    - nagios_cent
+
+- hosts: ubuntu
+  become: true
+  roles:
+    - role: prometheus_ubuntu
+      source: https://github.com/prometheus/prometheus/releases/download/v2.43.0/prometheus-2.43.0.linux-amd64.tar.gz
+
+- hosts: centos
+  become: true
+  roles:
+    - role: prometheus_cent
+      source: https://github.com/prometheus/prometheus/releases/download/v2.43.0/prometheus-2.43.0.linux-amd64.tar.gz
+
+#- hosts: ElasticSearch
+#  tags: es
+#  become: true
+#  roles:
+#    - { role: ElasticSearch}
+
+- hosts: logstash
+  tags: logstash
+  become: true
+  roles:
+    - role: logstash
+      gpg_key_logstash: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+
+- hosts: kibana
+  tags: kibana
+  become: true
+  roles:
+    - role: Kibana
+      gpg_key_kibana: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+
+- hosts: centos
+  tags: ls
+  become: true
+  roles:
+    - lampstack_cent
+
+- hosts: ubuntu
+  tags: ls
+  become: true
+  roles:
+    - lampstack_ubuntu

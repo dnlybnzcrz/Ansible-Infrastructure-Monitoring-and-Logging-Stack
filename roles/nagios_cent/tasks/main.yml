@@ -1,0 +1,91 @@
+
+- name: Dependencies and Libraries needed for Nagios (CentOS)
+  tags: dependencies, libraries
+  dnf:
+    name:
+      - gcc
+      - glibc
+      - glibc-common
+      - perl
+      - httpd
+      - php
+      - wget
+      - gd
+      - gd-devel
+      - openssl-devel
+      - gcc
+      - glibc
+      - glibc-common
+      - make
+      - gettext
+      - automake
+      - autoconf
+      - wget
+      - net-snmp
+      - net-snmp-utils
+      - python3-pip
+    state: latest
+
+- name: Install passlib python package (CentOS)
+  pip:
+    name: passlib
+
+- name: create a directory for nagios (CentOS)
+  file:
+    path: ~/nagios
+    state: directory
+
+- name: Nagios Download (CentOS)
+  unarchive:
+    src: https://github.com/NagiosEnterprises/nagioscore/archive/nagios-4.4.6.tar.gz
+    dest: ~/nagios
+    remote_src: yes
+    mode: 0777
+    owner: root
+    group: root
+
+- name: Compiling nagios and adding groups(CentOS)
+  shell: |
+    cd ~/nagios/nagioscore-**
+    ./configure
+    make all
+    make install-groups-users
+    usermod -a -G nagios apache
+    make install
+    make install-daemoninit
+    make install-commandmode
+    make install-config
+    make install-webconf
+- name: Downloading nagios plugins(CentOS)
+  unarchive:
+    src: https://github.com/nagios-plugins/nagios-plugins/archive/release-2.3.3.tar.gz
+    dest: ~/nagios
+    remote_src: yes
+    mode: 0777
+    owner: root
+    group: root
+
+- name: Nagios Plugins installation (CentOS)
+  shell: |
+    cd ~/nagios/nagios-plugins*
+    ./tools/setup
+    ./configure
+    make
+    make install
+- name: creating user and password (CentOS)
+  community.general.htpasswd:
+    path: /usr/local/nagios/etc/htpasswd.users
+    name: nagiosadmin
+    password: 1234
+
+- name: starting and enabling nagios (CentOS)
+  service:
+    name: nagios
+    state: restarted
+    enabled: true
+
+- name: starting and enabling httpd (CentOS)
+  service:
+    name:  httpd
+    state: restarted
+    enabled: true

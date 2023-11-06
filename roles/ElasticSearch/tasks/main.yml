@@ -1,0 +1,19 @@
+- name: Download and install Elasticsearch GPG key
+  become: true
+  shell: |
+        wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo gpg --dearmor -o /usr/share/keyrings/elasticsearch-keyring.gpg
+
+- name: Install apt-transport-https package on Debian
+  become: true
+  shell: |
+        sudo-aptget install apt-transport-https
+
+- name: Download and install Elasticsearch GPG key
+  become: true
+  shell: |
+        echo "deb [signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://artifacts.elastic.co/packages/8.x/apt stable main" | sudo tee /etc/apt/sources.list.d/elastic-8.x.list
+
+- name: Install ELasticsearch Debian Package (Ubuntu)
+  become: true
+  shell: |
+        sudo apt-get update && sudo apt-get install elasticsearch

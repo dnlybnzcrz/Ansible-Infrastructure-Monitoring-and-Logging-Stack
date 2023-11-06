@@ -1,0 +1,99 @@
+- name: Dependencies and Libraries needed for Nagios (Ubuntu)
+  tags: dependencies, libraries
+  apt:
+    name:
+      - autoconf
+      - gcc
+      - libc6
+      - make
+      - wget
+      - unzip
+      - apache2
+      - php
+      - libapache2-mod-php7.4
+      - libgd-dev
+      - openssl
+      - libssl-dev
+      - autoconf
+      - libc6
+      - libmcrypt-dev
+      - make
+      - libssl-dev
+      - wget
+      - bc
+      - gawk
+      - dc
+      - build-essential
+      - snmp
+      - libnet-snmp-perl
+      - gettext
+      - python3-pip
+      - python3
+    state: latest
+
+- name: Install passlib python package (Ubuntu)
+  pip:
+    name: passlib
+
+- name: create a directory for nagios (Ubuntu)
+  file:
+    path: ~/nagios
+    state: directory
+
+- name: Nagios Download (Ubuntu)
+  unarchive:
+    src: https://github.com/NagiosEnterprises/nagioscore/archive/nagios-4.4.6.tar.gz
+    dest: ~/nagios
+    remote_src: yes
+    mode: 0755
+    owner: root
+    group: root
+
+- name: Compiling nagios and adding groups(Ubuntu)
+  shell: |
+    cd ~/nagios/nagioscore-**
+    sudo ./configure --with-httpd-conf=/etc/apache2/sites-enabled
+    sudo make all
+    sudo make install-groups-users
+    sudo usermod -a -G nagios www-data
+    sudo make install
+    sudo make install-daemoninit
+    sudo make install-commandmode
+    sudo make install-config
+    sudo make install-webconf
+    sudo a2enmod rewrite
+    sudo a2enmod cgi
+ 
+- name: Downloading nagios plugins(Ubuntu)
+  unarchive:
+    src: https://github.com/nagios-plugins/nagios-plugins/archive/release-2.3.3.tar.gz
+    dest: ~/nagios
+    remote_src: yes
+    mode: 0755
+    owner: root
+    group: root
+
+- name: Nagios Plugins installation (Ubuntu)
+  shell: |
+    cd ~/nagios/nagios-plugins*
+    ./tools/setup
+    ./configure
+    make
+    make install
+- name: creating user and password (Ubuntu)
+  community.general.htpasswd:
+    path: /usr/local/nagios/etc/htpasswd.users
+    name: nagiosadmin
+    password: 1234
+
+- name: starting and enabling nagios (Ubuntu)
+  service:
+    name: nagios
+    state: restarted
+    enabled: true
+
+- name: starting and enabling apache (Ubuntu)
+  service:
+    name:  apache2
+    state: restarted
+    enabled: true
